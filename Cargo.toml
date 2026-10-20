@@ -1,0 +1,29 @@
+[package]
+name = "wlrix-bluetooth"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+description = "wlRIX Bluetooth status -- adapters and devices as a StatusNotifierItem for wlrix-tray, and BlueZ's pairing agent."
+repository = "https://github.com/wlRIX/wlrix-bluetooth"
+publish = false
+
+[dependencies]
+# The event loop. The BlueZ watcher, the tray watcher, the menu, the pairing agent, the prompt's
+# answers and the SIGHUP/SIGTERM pings are all sources on one loop, with a timer to let a burst of
+# signals settle. No Wayland: this program draws nothing -- `wlrix-tray` draws its icon.
+calloop = "0.13"
+# D-Bus, twice over: the system bus, where bluetoothd is, and the session bus, where the item is
+# served, the tray is and the notifications go. Blocking API and no tokio, as in every other wlRIX
+# component.
+zbus = "5"
+# The config file.
+serde = { version = "1", features = ["derive"] }
+toml = "1"
+# The pairing prompt's one-line request and answer.
+serde_json = "1"
+# A one-shot reply for the agent. bluetoothd's `RequestConfirmation` waits on a person reading a
+# code off a headset, so the agent's methods are async and await the main loop's answer on one of
+# these rather than holding the system bus's dispatch thread. Already in the tree by way of zbus.
+async-channel = "2"
+# `O_NOFOLLOW` on the pidfile, `signal` for the handlers.
+libc = "0.2"
