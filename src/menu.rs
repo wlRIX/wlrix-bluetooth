@@ -22,6 +22,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::bluez::Snapshot;
+use crate::i18n::{Language, tr};
 use crate::indicator::{Extra, label, view};
 
 /// What choosing a row does.
@@ -150,7 +151,7 @@ pub fn build(
         action: Some(Action::Power(!on)),
         // Nothing in software lifts a hardware switch.
         enabled: !hard_blocked,
-        ..Row::new(POWER, "Bluetooth Enabled")
+        ..Row::new(POWER, tr("Bluetooth Enabled", "Bluetooth を有効にする"))
     });
 
     if on {
@@ -161,7 +162,10 @@ pub fn build(
         for device in paired {
             let busy = connecting.contains(&device.path);
             let text = if busy {
-                format!("{} (connecting...)", device.name)
+                Language::current().pick(
+                    format!("{} (connecting...)", device.name),
+                    format!("{} (接続中...)", device.name),
+                )
             } else {
                 label(device)
             };
@@ -177,7 +181,7 @@ pub fn build(
     root.children.push(Row::separator(SETTINGS_SEPARATOR));
     root.children.push(Row {
         action: Some(Action::OpenSettings),
-        ..Row::new(SETTINGS, "Bluetooth Settings...")
+        ..Row::new(SETTINGS, tr("Bluetooth Settings...", "Bluetooth の設定..."))
     });
     root
 }

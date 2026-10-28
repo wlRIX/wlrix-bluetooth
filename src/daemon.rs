@@ -30,6 +30,7 @@ use crate::agent::{self, AgentError, AgentEvent, Answer, Question, Reply};
 use crate::bluez::{self, Snapshot};
 use crate::config::Config;
 use crate::dbusmenu::MenuEvent;
+use crate::i18n::{Language, tr};
 use crate::indicator::{self, Extra, Status, View};
 use crate::menu::{self, Action, Ids};
 use crate::prompt::{self, Request};
@@ -156,8 +157,14 @@ impl Daemon {
             if warn && self.config.battery_warnings() {
                 self.notify(
                     "battery-caution-symbolic",
-                    &format!("{} battery low", device.name),
-                    &format!("{percent}% remaining."),
+                    &Language::current().pick(
+                        format!("{} battery low", device.name),
+                        format!("{} のバッテリー残量が少なくなっています", device.name),
+                    ),
+                    &Language::current().pick(
+                        format!("{percent}% remaining."),
+                        format!("残り {percent}% です。"),
+                    ),
                 );
             }
         }
@@ -178,11 +185,7 @@ impl Daemon {
             Action::Device(path, false) => {
                 if let Err(err) = bluez::disconnect(&self.system, &path) {
                     eprintln!("wlrix-bluetooth: disconnecting {path} failed: {err}");
-                    self.notify(
-                        "bluetooth-symbolic",
-                        "Bluetooth change failed",
-                        &bluez::refusal(&err),
-                    );
+                    self.notify("bluetooth-symbolic", change_failed(), &bluez::refusal(&err));
                 }
             }
             Action::OpenSettings => open_settings(self),
@@ -205,8 +208,14 @@ impl Daemon {
             eprintln!("wlrix-bluetooth: could not unblock rfkill: {err}");
             self.notify(
                 "bluetooth-disabled-symbolic",
-                "Bluetooth could not be turned on",
-                &format!("It is blocked by rfkill, and lifting that failed: {err}."),
+                tr(
+                    "Bluetooth could not be turned on",
+                    "Bluetooth をオンにできませんでした",
+                ),
+                &Language::current().pick(
+                    format!("It is blocked by rfkill, and lifting that failed: {err}."),
+                    format!("rfkill でブロックされていて、解除できませんでした: {err}。"),
+                ),
             );
             return;
         }
@@ -215,11 +224,7 @@ impl Daemon {
             // notification when the adapter comes up anyway.
             if !(on && adapter.blocked()) {
                 eprintln!("wlrix-bluetooth: switching Bluetooth failed: {err}");
-                self.notify(
-                    "bluetooth-symbolic",
-                    "Bluetooth change failed",
-                    &bluez::refusal(&err),
-                );
+                self.notify("bluetooth-symbolic", change_failed(), &bluez::refusal(&err));
             }
         }
     }
@@ -236,7 +241,10 @@ impl Daemon {
             eprintln!("wlrix-bluetooth: connecting {name} failed: {why}");
             self.notify(
                 "bluetooth-disconnected-symbolic",
-                &format!("Could not connect to {name}"),
+                &Language::current().pick(
+                    format!("Could not connect to {name}"),
+                    format!("{name} に接続できませんでした"),
+                ),
                 &why,
             );
         }
@@ -365,8 +373,14 @@ impl Daemon {
                 eprintln!("wlrix-bluetooth: {err}");
                 self.notify(
                     "bluetooth-symbolic",
-                    "The pairing prompt would not start",
-                    &format!("{err}. Is wlrix-bluetooth-prompt installed?"),
+                    tr(
+                        "The pairing prompt would not start",
+                        "ペアリングの画面を開けませんでした",
+                    ),
+                    &Language::current().pick(
+                        format!("{err}. Is wlrix-bluetooth-prompt installed?"),
+                        format!("{err}。wlrix-bluetooth-prompt はインストールされていますか?"),
+                    ),
                 );
                 None
             }
@@ -426,6 +440,14 @@ impl Daemon {
     }
 }
 
+/// The summary of a notification saying BlueZ refused something.
+fn change_failed() -> &'static str {
+    tr(
+        "Bluetooth change failed",
+        "Bluetooth を変更できませんでした",
+    )
+}
+
 fn open_settings(daemon: &Daemon) {
     // Started and left, its child reaped on a thread so it never lingers as a zombie.
     match std::process::Command::new(SETTINGS_PROGRAM).spawn() {
@@ -436,8 +458,14 @@ fn open_settings(daemon: &Daemon) {
             eprintln!("wlrix-bluetooth: could not start {SETTINGS_PROGRAM}: {err}");
             daemon.notify(
                 "bluetooth-symbolic",
-                "Bluetooth Settings would not start",
-                &format!("{err}. Is {SETTINGS_PROGRAM} installed?"),
+                tr(
+                    "Bluetooth Settings would not start",
+                    "Bluetooth の設定を開けませんでした",
+                ),
+                &Language::current().pick(
+                    format!("{err}. Is {SETTINGS_PROGRAM} installed?"),
+                    format!("{err}。{SETTINGS_PROGRAM} はインストールされていますか?"),
+                ),
             );
         }
     }

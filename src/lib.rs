@@ -23,6 +23,7 @@ pub mod bluez;
 pub mod config;
 pub mod daemon;
 pub mod dbusmenu;
+pub mod i18n;
 pub mod indicator;
 pub mod menu;
 pub mod pidfile;

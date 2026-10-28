@@ -22,6 +22,7 @@
 
 use crate::bluez::{Device, Snapshot};
 use crate::config::Indicator;
+use crate::i18n::{Language, tr};
 
 /// `Status`, as the StatusNotifierItem specification spells it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,7 +74,7 @@ pub fn view(snapshot: Option<&Snapshot>, extra: Extra, setting: Indicator) -> Vi
             status: Status::Passive,
             icon: "bluetooth-disabled-symbolic".to_owned(),
             title: "Bluetooth".to_owned(),
-            body: "No Bluetooth adapter".to_owned(),
+            body: tr("No Bluetooth adapter", "Bluetooth アダプタがありません").to_owned(),
         };
     };
     let status = match setting {
@@ -83,20 +84,32 @@ pub fn view(snapshot: Option<&Snapshot>, extra: Extra, setting: Indicator) -> Vi
     let off = |icon: &str, body: &str| View {
         status,
         icon: format!("{icon}-symbolic"),
-        title: "Bluetooth: Off".to_owned(),
+        title: tr("Bluetooth: Off", "Bluetooth: オフ").to_owned(),
         body: body.to_owned(),
     };
     if extra.hard_blocked {
         return off(
             "bluetooth-hardware-disabled",
-            "Turned off by the hardware switch",
+            tr(
+                "Turned off by the hardware switch",
+                "ハードウェアスイッチでオフになっています",
+            ),
         );
     }
     if adapter.blocked() {
-        return off("bluetooth-disabled", "Turned off (airplane mode or rfkill)");
+        return off(
+            "bluetooth-disabled",
+            tr(
+                "Turned off (airplane mode or rfkill)",
+                "オフになっています (機内モードまたは rfkill)",
+            ),
+        );
     }
     if !adapter.powered {
-        return off("bluetooth-disabled", "Bluetooth is off");
+        return off(
+            "bluetooth-disabled",
+            tr("Bluetooth is off", "Bluetooth はオフです"),
+        );
     }
 
     let connected: Vec<&Device> = snapshot.connected().collect();
@@ -108,15 +121,18 @@ pub fn view(snapshot: Option<&Snapshot>, extra: Extra, setting: Indicator) -> Vi
         "bluetooth-disconnected"
     };
     let title = match connected.len() {
-        0 => "Bluetooth: On".to_owned(),
+        0 => tr("Bluetooth: On", "Bluetooth: オン").to_owned(),
         1 => format!("Bluetooth: {}", connected[0].name),
-        n => format!("Bluetooth: {n} devices connected"),
+        n => Language::current().pick(
+            format!("Bluetooth: {n} devices connected"),
+            format!("Bluetooth: {n} 台のデバイスが接続済み"),
+        ),
     };
     let body = if connected.is_empty() {
         if extra.connecting {
-            "Connecting...".to_owned()
+            tr("Connecting...", "接続しています...").to_owned()
         } else {
-            "No devices connected".to_owned()
+            tr("No devices connected", "接続しているデバイスはありません").to_owned()
         }
     } else {
         connected

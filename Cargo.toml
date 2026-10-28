@@ -1,6 +1,6 @@
 [package]
 name = "wlrix-bluetooth"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
 description = "wlRIX Bluetooth status -- adapters and devices as a StatusNotifierItem for wlrix-tray, and BlueZ's pairing agent."
